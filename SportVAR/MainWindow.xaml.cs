@@ -1,9 +1,12 @@
-﻿using System.Windows;
+﻿using System.Timers;
+using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
+using SportVAR.Models;
 using SportVAR.Services;
+using SportVAR.Utilities;
 using Window = System.Windows.Window;
 
 namespace SportVAR;
@@ -12,121 +15,100 @@ public partial class MainWindow : Window
 {
     private readonly ICameraService _camera;
     private readonly Func<IVideoRecorder> _recorderFactory;
+    private readonly IPreviewService _previewService;
+    private readonly List<Mat> _frameBuffer = [];
+    //private readonly Timer _playbackTimer;
+    private readonly bool _isSeeking = false;
+    private readonly AppState _appState = new();
 
-    private bool _isRecording;
     private IVideoRecorder _recorder;
-    private List<Mat> _frameBuffer = new();
-    private bool _isSeeking = false;
-    private bool _isReviewing = false; // stays true until user says "jump to live"
-    private bool _isPlaying = false;
-    private int _playbackIndex = 0;
-    private System.Timers.Timer _playbackTimer;
-    private int _tickCount = 0;
-    private int _ticksPerFrame = 2; // Play every 2 timer ticks
+    private int _tickCount;
 
+    //private const int TicksPerFrame = 2; // Play every 2 timer ticks
 
-
-    public MainWindow(ICameraService camera, Func<IVideoRecorder> recorderFactory)
+    public MainWindow(ICameraService camera, Func<IVideoRecorder> recorderFactory, IPreviewService previewService)
     {
         InitializeComponent();
 
-        _playbackTimer = new System.Timers.Timer(50); // ~30fps
-        _playbackTimer.Elapsed += PlaybackTimer_Elapsed;
-        _playbackTimer.AutoReset = true;
+        //_playbackTimer = new Timer(33); // ~30fps
+        //_playbackTimer.Elapsed += PlaybackTimer_Elapsed;
+        //_playbackTimer.AutoReset = true;
 
         _camera = camera;
         _recorderFactory = recorderFactory;
+        _previewService = previewService;
+        _previewService.Initialize(_appState, liveImage, frameSlider, Dispatcher.CurrentDispatcher, _frameBuffer);
 
         _camera.SetFrameCallback(OnFrameReceived);
     }
 
-    private void PlaybackTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
-    {
-        if (!_isPlaying || _frameBuffer.Count == 0)
-        {
-            _playbackTimer.Stop();
-            return;
-        }
+    //private void PlaybackTimer_Elapsed(object? sender, ElapsedEventArgs e)
+    //{
+    //    if (!_appState.IsPlaying || _frameBuffer.Count == 0)
+    //    {
+    //        _playbackTimer.Stop();
+    //        return;
+    //    }
 
-        _tickCount++;
-        if (_tickCount < _ticksPerFrame)
-            return;
-        _tickCount = 0;
+    //    _tickCount++;
+    //    if (_tickCount < TicksPerFrame)
+    //        return;
+    //    _tickCount = 0;
 
-        if (_playbackIndex >= _frameBuffer.Count)
-        {
-            // Reached end of buffer -> stop playing and switch back to live
-            _isPlaying = false;
-            _isReviewing = false;
-            _playbackTimer.Stop();
+    //    if (_appState.CurrentFrameIndex >= _frameBuffer.Count)
+    //    {
+    //        // Reached end of buffer -> stop playing and switch back to live
+    //        _appState.IsPlaying = false;
+    //        _appState.IsReviewing = false;
+    //        _playbackTimer.Stop();
 
-            Dispatcher.Invoke(() =>
-                              {
-                                  if (_frameBuffer.Count > 0)
-                                  {
-                                      var latest = _frameBuffer.Last();
-                                      liveImage.Source = latest.ToBitmapSource();
-                                      frameSlider.Value = _frameBuffer.Count - 1;
-                                  }
-                              });
-            return;
-        }
+    //        Dispatcher.Invoke(() =>
+    //                          {
+    //                              if (_frameBuffer.Count > 0)
+    //                              {
+    //                                  var latest = _frameBuffer.Last();
+    //                                  liveImage.Source = latest.ToBitmapSource();
+    //                                  frameSlider.Value = _frameBuffer.Count - 1;
+    //                              }
+    //                          });
+    //        return;
+    //    }
 
-        var frame = _frameBuffer[_playbackIndex];
-        _playbackIndex++;
+    //    var frame = _frameBuffer[_appState.CurrentFrameIndex];
+    //    _appState.CurrentFrameIndex++;
 
-        Dispatcher.Invoke(() =>
-                          {
-                              liveImage.Source = frame.ToBitmapSource();
-                              frameSlider.Value = _playbackIndex;
-                          });
-    }
+    //    Dispatcher.Invoke(() =>
+    //                      {
+    //                          liveImage.Source = frame.ToBitmapSource();
+    //                          frameSlider.Value = _appState.CurrentFrameIndex;
+    //                      });
+    //}
 
 
     private void OnFrameReceived(Mat frame)
     {
-        if (frame == null || frame.Empty())
+        if (frame.IsNull() || frame.Empty())
             return;
 
-        if (_isRecording)
-        {
+        if (_appState.IsRecording)
             _frameBuffer.Add(frame.Clone());
-        }
 
-        if (!_isReviewing)
-        {
-            var currentFrame = frame.Clone();
-            Dispatcher.Invoke(() =>
-                              {
-                                  liveImage.Source = currentFrame.ToBitmapSource();
-                                  frameSlider.Maximum = _frameBuffer.Count - 1;
-                                  frameSlider.Value = _frameBuffer.Count - 1;
-                              });
-        }
-    }
+        if (_appState.IsReviewing) return;
 
-    private void ToggleRecord_Click(object sender, RoutedEventArgs e)
-    {
-        if (!_isRecording)
-        {
-            _recorder = _recorderFactory.Invoke();
-            _recorder.Start();
-        }
-        else
-        {
-            _recorder.Stop();
-            _recorder.Dispose();
-            _recorder = null;
-        }
-
-        _isRecording = !_isRecording;
+        var currentFrame = frame.Clone();
+        Dispatcher.Invoke(() =>
+                          {
+                              liveImage.Source = currentFrame.ToBitmapSource();
+                              frameSlider.Maximum = _frameBuffer.Count - 1;
+                              frameSlider.Value = _frameBuffer.Count - 1;
+                          });
     }
 
     private void btRecord_Click(object sender, RoutedEventArgs e)
     {
         _camera.Start();
 
-        if (!_isRecording)
+        if (!_appState.IsRecording)
         {
             _recorder = _recorderFactory.Invoke();
             _recorder.Start();
@@ -135,81 +117,62 @@ public partial class MainWindow : Window
         {
             _recorder.Stop();
             _recorder.Dispose();
-            _recorder = null;
+            _recorder = null!;
         }
 
-        _isRecording = !_isRecording;
+        _appState.IsRecording = !_appState.IsRecording;
     }
 
     private void btStop_Click(object sender, RoutedEventArgs e)
     {
-        _recorder?.Stop();
-        _recorder?.Dispose();
+        _recorder.Stop();
         _camera.Stop();
         _camera.Dispose();
     }
 
     private void frameSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
-        //if (_isSeeking && _frameBuffer.Count > 0)
-        //{
-        //    int index = (int)frameSlider.Value;
-        //    if (index >= 0 && index < _frameBuffer.Count)
-        //    {
-        //        var frame = _frameBuffer[index];
-        //        liveImage.Source = frame.ToBitmapSource();
-        //    }
-        //}
+        if (!_isSeeking) return;
 
-        if (_isSeeking)
-        {
-            int index = (int)e.NewValue;
-            if (index >= 0 && index < _frameBuffer.Count)
-            {
-                var seekFrame = _frameBuffer[index];
-                liveImage.Source = seekFrame.ToBitmapSource();
-            }
-        }
+        var index = (int)e.NewValue;
+
+        if (index < 0 || index >= _frameBuffer.Count) return;
+
+        var seekFrame = _frameBuffer[index];
+        liveImage.Source = seekFrame.ToBitmapSource();
     }
 
     private void Slider_PreviewMouseDown(object sender, MouseButtonEventArgs e)
     {
-        _isReviewing = true;
+        _appState.IsReviewing = true;
     }
 
     private void Slider_PreviewMouseUp(object sender, MouseButtonEventArgs e)
     {
-        int index = (int)frameSlider.Value;
-        if (index >= 0 && index < _frameBuffer.Count)
-        {
-            _isReviewing = true;
-            _isPlaying = true;
-            _playbackIndex = index;
+        var index = (int)frameSlider.Value;
 
-            _playbackTimer.Start();
-        }
+        if (index < 0 || index >= _frameBuffer.Count) return;
+
+        _appState.CurrentFrameIndex = index;
+
+        _appState.IsReviewing = true;
+        _appState.IsPlaying = true;
+        _previewService.Start();
     }
-
-    private void JumpToLive()
-    {
-        _isPlaying = false;
-        _isReviewing = false;
-        _playbackTimer.Stop();
-
-        if (_frameBuffer.Count > 0)
-        {
-            var latest = _frameBuffer.Last();
-            Dispatcher.Invoke(() =>
-                              {
-                                  liveImage.Source = latest.ToBitmapSource();
-                                  frameSlider.Value = _frameBuffer.Count - 1;
-                              });
-        }
-    }
-
 
     private void btToLive_Click(object sender, RoutedEventArgs e)
     {
-        JumpToLive();
+        _appState.IsPlaying = false;
+        _appState.IsReviewing = false;
+        _previewService.Stop();
+
+        if (_frameBuffer.Count <= 0) return;
+
+        var latest = _frameBuffer.Last();
+        Dispatcher.Invoke(() =>
+                          {
+                              liveImage.Source = latest.ToBitmapSource();
+                              frameSlider.Value = _frameBuffer.Count - 1;
+                          });
     }
 }

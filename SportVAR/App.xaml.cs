@@ -27,7 +27,9 @@ public partial class App : Application
     {
         services.AddSingleton<ICameraService, CameraService>();
         services.AddTransient<IVideoRecorder>(provider =>
-                                                      new VideoRecorder("output.avi", 1280, 720));
+                                                      new VideoRecorder( 1280, 720));
+        
+        services.AddSingleton<IPreviewService, PreviewService>();
 
         services.AddSingleton<Func<IVideoRecorder>>(provider => provider.GetRequiredService<IVideoRecorder>);
 

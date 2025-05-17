@@ -1,4 +1,5 @@
 ﻿using OpenCvSharp;
+using SportVAR.Utilities;
 
 namespace SportVAR;
 
@@ -9,7 +10,7 @@ public class VideoRecorder : IVideoRecorder
     private readonly Size _frameSize;
     private readonly string _outputPath;
 
-    public VideoRecorder(string outputPath, int width, int height, int fps = 30)
+    public VideoRecorder(int width, int height, int fps = 30)
     {
         _fps = fps;
         _frameSize = new Size(width, height);
@@ -28,23 +29,25 @@ public class VideoRecorder : IVideoRecorder
 
     public void Write(Mat frame)
     {
-        _writer?.Write(frame);
+        _writer.Write(frame);
     }
 
     public void Stop()
     {
-        _writer?.Release();
-        _writer?.Dispose();
+        _writer.Release();
+        _writer.Dispose();
         _writer = null!;
     }
 
     public bool IsRecording()
     {
-        return _writer.IsOpened() == true;
+        return _writer.IsOpened();
     }
 
     public void Dispose()
     {
+        if (_writer.IsNull()) return;
+        
         Stop();
     }
 }

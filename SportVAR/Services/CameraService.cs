@@ -1,4 +1,5 @@
 ﻿using OpenCvSharp;
+using SportVAR.Utilities;
 
 namespace SportVAR.Services;
 
@@ -42,9 +43,19 @@ public class CameraService : ICameraService
 
     public void Stop()
     {
-        _cts?.Cancel();
-        _capture?.Release();
-        _capture?.Dispose();
+        if (_cts.IsNotNull())
+        {
+            _cts.Cancel();
+            _cts.Dispose();
+            _cts = null!;
+        }
+
+        if (_capture.IsNull()) return;
+
+        _capture.Release();
+        _capture.Dispose();
+        _capture = null!;
+
     }
 
     public void Dispose()
