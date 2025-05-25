@@ -1,4 +1,5 @@
 ﻿using OpenCvSharp;
+using SportVAR.Models;
 
 namespace SportVAR.Services;
 
@@ -9,4 +10,6 @@ public interface ICameraService : IDisposable
     void Stop();
 
     void SetFrameCallback(Action<Mat> callback);
+
+    void SetCameraDetails(CameraDetail cameraDetail);
 }

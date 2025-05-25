@@ -1,7 +1,5 @@
-﻿using System.Timers;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Input;
-using System.Windows.Threading;
 using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
 using SportVAR.Models;
@@ -16,74 +14,27 @@ public partial class MainWindow : Window
     private readonly ICameraService _camera;
     private readonly Func<IVideoRecorder> _recorderFactory;
     private readonly IPreviewService _previewService;
+    private readonly ICameraListService _cameraListService;
     private readonly List<Mat> _frameBuffer = [];
-    //private readonly Timer _playbackTimer;
     private readonly bool _isSeeking = false;
     private readonly AppState _appState = new();
-
+    
     private IVideoRecorder _recorder;
-    private int _tickCount;
+    private CameraDetail _cameraDetail = new();
+    private CameraModel _cameraModel = new();
 
-    //private const int TicksPerFrame = 2; // Play every 2 timer ticks
-
-    public MainWindow(ICameraService camera, Func<IVideoRecorder> recorderFactory, IPreviewService previewService)
+    public MainWindow(ICameraService camera, Func<IVideoRecorder> recorderFactory, IPreviewService previewService, ICameraListService cameraListService)
     {
         InitializeComponent();
-
-        //_playbackTimer = new Timer(33); // ~30fps
-        //_playbackTimer.Elapsed += PlaybackTimer_Elapsed;
-        //_playbackTimer.AutoReset = true;
 
         _camera = camera;
         _recorderFactory = recorderFactory;
         _previewService = previewService;
-        _previewService.Initialize(_appState, liveImage, frameSlider, Dispatcher.CurrentDispatcher, _frameBuffer);
+        _previewService.Initialize(_appState, liveImage, frameSlider, _frameBuffer);
 
         _camera.SetFrameCallback(OnFrameReceived);
+        _cameraListService = cameraListService;
     }
-
-    //private void PlaybackTimer_Elapsed(object? sender, ElapsedEventArgs e)
-    //{
-    //    if (!_appState.IsPlaying || _frameBuffer.Count == 0)
-    //    {
-    //        _playbackTimer.Stop();
-    //        return;
-    //    }
-
-    //    _tickCount++;
-    //    if (_tickCount < TicksPerFrame)
-    //        return;
-    //    _tickCount = 0;
-
-    //    if (_appState.CurrentFrameIndex >= _frameBuffer.Count)
-    //    {
-    //        // Reached end of buffer -> stop playing and switch back to live
-    //        _appState.IsPlaying = false;
-    //        _appState.IsReviewing = false;
-    //        _playbackTimer.Stop();
-
-    //        Dispatcher.Invoke(() =>
-    //                          {
-    //                              if (_frameBuffer.Count > 0)
-    //                              {
-    //                                  var latest = _frameBuffer.Last();
-    //                                  liveImage.Source = latest.ToBitmapSource();
-    //                                  frameSlider.Value = _frameBuffer.Count - 1;
-    //                              }
-    //                          });
-    //        return;
-    //    }
-
-    //    var frame = _frameBuffer[_appState.CurrentFrameIndex];
-    //    _appState.CurrentFrameIndex++;
-
-    //    Dispatcher.Invoke(() =>
-    //                      {
-    //                          liveImage.Source = frame.ToBitmapSource();
-    //                          frameSlider.Value = _appState.CurrentFrameIndex;
-    //                      });
-    //}
-
 
     private void OnFrameReceived(Mat frame)
     {
@@ -98,7 +49,7 @@ public partial class MainWindow : Window
         var currentFrame = frame.Clone();
         Dispatcher.Invoke(() =>
                           {
-                              liveImage.Source = currentFrame.ToBitmapSource();
+                              liveImage.Source = currentFrame.ToBitmapSource(); ;
                               frameSlider.Maximum = _frameBuffer.Count - 1;
                               frameSlider.Value = _frameBuffer.Count - 1;
                           });
@@ -128,6 +79,7 @@ public partial class MainWindow : Window
         _recorder.Stop();
         _camera.Stop();
         _camera.Dispose();
+        _appState.IsRecording = !_appState.IsRecording;
     }
 
     private void frameSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -145,25 +97,24 @@ public partial class MainWindow : Window
     private void Slider_PreviewMouseDown(object sender, MouseButtonEventArgs e)
     {
         _appState.IsReviewing = true;
+        _appState.IsUserDraggingSlider = true;
     }
 
     private void Slider_PreviewMouseUp(object sender, MouseButtonEventArgs e)
     {
+        _appState.IsUserDraggingSlider = false;
+
         var index = (int)frameSlider.Value;
 
         if (index < 0 || index >= _frameBuffer.Count) return;
 
         _appState.CurrentFrameIndex = index;
 
-        _appState.IsReviewing = true;
-        _appState.IsPlaying = true;
         _previewService.Start();
     }
 
     private void btToLive_Click(object sender, RoutedEventArgs e)
     {
-        _appState.IsPlaying = false;
-        _appState.IsReviewing = false;
         _previewService.Stop();
 
         if (_frameBuffer.Count <= 0) return;
@@ -174,5 +125,27 @@ public partial class MainWindow : Window
                               liveImage.Source = latest.ToBitmapSource();
                               frameSlider.Value = _frameBuffer.Count - 1;
                           });
+    }
+
+    private void cmbCameraNames_Loaded(object sender, RoutedEventArgs e)
+    {
+        cmbCameraNames.ItemsSource = _cameraListService.CameraNames();
+        cmbCameraNames.DisplayMemberPath = "Name";
+    }
+
+    private void cmbCameraNames_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        _cameraModel = (CameraModel)cmbCameraNames.SelectedItem;
+        cmbCameraResolutions.ItemsSource = _cameraListService.CameraResolution(_cameraModel.Name);
+        cmbCameraResolutions.DisplayMemberPath = "FormattedString";
+    }
+
+    private void cmbCameraResolutions_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        _cameraDetail = (CameraDetail)cmbCameraResolutions.SelectedItem;
+        _cameraDetail.Name = _cameraModel.Name;
+        _cameraDetail.Index = _cameraModel.Index;
+
+        _camera.SetCameraDetails(_cameraDetail);
     }
 }

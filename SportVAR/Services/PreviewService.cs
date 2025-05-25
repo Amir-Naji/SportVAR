@@ -1,50 +1,52 @@
-﻿using OpenCvSharp;
-using SportVAR.Models;
-using System.Timers;
+﻿using System.Timers;
 using System.Windows.Controls;
-using System.Windows.Threading;
+using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
+using SportVAR.Models;
 using Timer = System.Timers.Timer;
 
 namespace SportVAR.Services;
 
 public class PreviewService : IPreviewService
 {
-    private readonly Timer _playbackTimer;
+    private readonly IDispatcher _dispatcher;
 
-    private List<Mat> _frameBuffer = [];
-    private Dispatcher _dispatcher;
-    private Image _liveImage;
-    private Slider _frameSlider;
-    private int _tickCount;
+    private readonly Timer _playbackTimer;
     private AppState _appState;
+    private List<Mat> _frameBuffer = [];
+    private Slider _frameSlider;
+    private Image _liveImage;
+    private int _tickCount;
 
     private const int TicksPerFrame = 2; // Play every 2 timer ticks
 
-
-    public PreviewService()
+    public PreviewService(IDispatcher dispatcher)
     {
         _playbackTimer = new Timer(33); // ~30fps
         _playbackTimer.Elapsed += PlaybackTimer_Elapsed;
         _playbackTimer.AutoReset = true;
+        _dispatcher = dispatcher;
     }
 
-    public void Initialize(AppState appState, Image image, Slider slider, Dispatcher dispatcher, List<Mat> frameBuffer)
+    public void Initialize(AppState appState, Image image, Slider slider, List<Mat> frameBuffer)
     {
         _appState = appState;
         _liveImage = image;
         _frameSlider = slider;
-        _dispatcher = dispatcher;
         _frameBuffer = frameBuffer;
     }
 
     public void Start()
     {
+        _appState.IsReviewing = true;
+        _appState.IsPlaying = true;
         _playbackTimer.Start();
     }
 
     public void Stop()
     {
+        _appState.IsPlaying = false;
+        _appState.IsReviewing = false;
         _playbackTimer.Stop();
     }
 
@@ -58,38 +60,45 @@ public class PreviewService : IPreviewService
 
         if (SlowdownSliderForPreview()) return;
 
-        if (_appState.CurrentFrameIndex >= _frameBuffer.Count)
-        {
-            // Reached end of buffer -> stop playing and switch back to live
-            StopPlayback();
+        UpdateUIAtPlaybackEnd();
+        UpdateUIWithFrame(_frameBuffer[_appState.CurrentFrameIndex++]);
+    }
 
-            _dispatcher.Invoke(() =>
-                               {
-                                   if (_frameBuffer.Count <= 0) return;
+    // Safeguard for the last frame to make sure the last frame is displayed.
+    private void UpdateUIAtPlaybackEnd()
+    {
+        if (_appState.CurrentFrameIndex < _frameBuffer.Count) return;
 
-                                   var latest = _frameBuffer.Last();
-                                   _liveImage.Source = latest.ToBitmapSource();
-                                   _frameSlider.Value = _frameBuffer.Count - 1;
-                               });
-            return;
-        }
-
-        var frame = _frameBuffer[_appState.CurrentFrameIndex++];
-
+        // Reached end of buffer -> stop playing and switch back to live
+        StopPlayback();
         _dispatcher.Invoke(() =>
-                          {
-                              _liveImage.Source = frame.ToBitmapSource();
-                              _frameSlider.Value = _appState.CurrentFrameIndex;
-                          });
+                           {
+                               if (_frameBuffer.Count <= 0) return;
+
+                               var latest = _frameBuffer.Last();
+                               _liveImage.Source = latest.ToBitmapSource();
+                               if (!_appState.IsUserDraggingSlider)
+                                   _frameSlider.Value = _frameBuffer.Count - 1;
+                           });
+    }
+
+    private void UpdateUIWithFrame(Mat frame)
+    {
+        _dispatcher.Invoke(() =>
+                           {
+                               _liveImage.Source = frame.ToBitmapSource();
+                               if (!_appState.IsUserDraggingSlider)
+                                   _frameSlider.Value = _appState.CurrentFrameIndex;
+                           });
     }
 
     private bool SlowdownSliderForPreview()
     {
         _tickCount++;
-        
+
         if (_tickCount < TicksPerFrame)
             return true;
-        
+
         _tickCount = 0;
         return false;
     }

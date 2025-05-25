@@ -25,14 +25,14 @@ public partial class App : Application
 
     private void ConfigureServices(IServiceCollection services)
     {
-        services.AddSingleton<ICameraService, CameraService>();
+        services.AddSingleton<IDispatcher>(new WpfDispatcher(Current.Dispatcher));
+        services.AddTransient<ICameraService, CameraService>();
         services.AddTransient<IVideoRecorder>(provider =>
                                                       new VideoRecorder( 1280, 720));
         
-        services.AddSingleton<IPreviewService, PreviewService>();
-
+        services.AddTransient<IPreviewService, PreviewService>();
+        services.AddTransient<ICameraListService, CameraListService>();
         services.AddSingleton<Func<IVideoRecorder>>(provider => provider.GetRequiredService<IVideoRecorder>);
-
         services.AddSingleton<MainWindow>();
     }
 }

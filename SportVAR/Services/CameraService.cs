@@ -1,25 +1,23 @@
 ﻿using OpenCvSharp;
+using SportVAR.Models;
 using SportVAR.Utilities;
 
 namespace SportVAR.Services;
 
-public class CameraService : ICameraService
+public class CameraService: ICameraService
 {
     private VideoCapture _capture;
     private CancellationTokenSource _cts;
     private Action<Mat> _frameCallback;
-
-    private int _width = 1280;
-    public int _height { get; set; } = 720;
-    public int _fps { get; set; } = 30;
+    private CameraDetail _cameraDetail;
 
     public void Start()
     {
-        _capture = new VideoCapture(0, VideoCaptureAPIs.DSHOW)
+        _capture = new VideoCapture(_cameraDetail.Index, VideoCaptureAPIs.DSHOW)
                    {
-                       FrameWidth = _width,
-                       FrameHeight = _height,
-                       Fps = _fps
+                       FrameWidth = _cameraDetail.Width,
+                       FrameHeight = _cameraDetail.Height,
+                       Fps = _cameraDetail.Fps
                    };
 
         if (!_capture.IsOpened())
@@ -37,7 +35,7 @@ public class CameraService : ICameraService
             _capture.Read(frame);
             if (!frame.Empty())
                 _frameCallback?.Invoke(frame.Clone());
-            Thread.Sleep(1000 / _fps);
+            Thread.Sleep(1000 / _cameraDetail.Fps);
         }
     }
 
@@ -67,5 +65,10 @@ public class CameraService : ICameraService
     public void SetFrameCallback(Action<Mat> callback)
     {
         _frameCallback = callback;
+    }
+
+    public void SetCameraDetails(CameraDetail cameraDetail)
+    {
+        _cameraDetail = cameraDetail;
     }
 }

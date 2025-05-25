@@ -5,20 +5,19 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:wpf="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
         mc:Ignorable="d" Title="MainWindow" Height="657" Width="800">
-    <Grid Height="634" VerticalAlignment="Top">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="511*"/>
-            <ColumnDefinition Width="289*"/>
-        </Grid.ColumnDefinitions>
-        <Button x:Name="btRecord" Content="Record" HorizontalAlignment="Left" Height="44" Margin="40,585,0,0" VerticalAlignment="Top" Width="97" Click="btRecord_Click" Grid.Column="1"/>
-        <Button x:Name="btStop" Content="Stop" HorizontalAlignment="Left" Height="44" Margin="142,585,0,0" VerticalAlignment="Top" Width="97" Click="btStop_Click" Grid.Column="1"/>
-        <Button x:Name="btToLive" Content="Live" HorizontalAlignment="Left" Height="44" Margin="439,585,0,0" VerticalAlignment="Top" Width="97" Click="btToLive_Click" Grid.ColumnSpan="2"/>
-        <Image x:Name="liveImage" Stretch="Uniform" Margin="10,10,10,76" Grid.ColumnSpan="2"/>
+    <Grid>
+        <Button x:Name="btRecord" Content="Record" HorizontalAlignment="Right" Margin="0,0,152,21" Height="30" Width="97" Click="btRecord_Click" VerticalAlignment="Bottom"/>
+        <Button x:Name="btStop" Content="Stop"  HorizontalAlignment="Right" Margin="0,0,50,21" Width="97" Height="30" Click="btStop_Click" VerticalAlignment="Bottom"/>
+        <Button x:Name="btToLive" Content="Live" HorizontalAlignment="Right" Margin="0,0,254,21" Width="97" Height="30" Click="btToLive_Click" VerticalAlignment="Bottom"/>
+        <Image x:Name="liveImage" Stretch="Uniform" Margin="10,10,10,76"/>
         <Slider x:Name="frameSlider"
                 Minimum="0"
                 ValueChanged="frameSlider_ValueChanged"
                 PreviewMouseDown="Slider_PreviewMouseDown"
                 PreviewMouseUp="Slider_PreviewMouseUp"
-                Margin="10,560,10,0" Grid.ColumnSpan="2" Height="20" VerticalAlignment="Top"/>
+                Margin="10,0,10,61" Height="20" VerticalAlignment="Bottom"/>
+
+        <ComboBox x:Name="cmbCameraNames" HorizontalAlignment="Left" Margin="28,0,0,29" VerticalAlignment="Bottom" Width="200" Loaded="cmbCameraNames_Loaded" SelectionChanged="cmbCameraNames_SelectionChanged" />
+        <ComboBox x:Name="cmbCameraResolutions" HorizontalAlignment="Left" Margin="234,0,0,29" VerticalAlignment="Bottom" Width="200" SelectionChanged="cmbCameraResolutions_SelectionChanged" />
     </Grid>
 </Window>

@@ -14,5 +14,8 @@ public record AppState()
     
     public int CurrentFrameIndex { get; set; }
 
+    public bool IsUserDraggingSlider { get; set; }
+
+
     //public int PlaybackIndex { get; set; }
 }
