@@ -6,13 +6,15 @@ namespace SportVAR.Services;
 
 public class CameraService: ICameraService
 {
-    private VideoCapture _capture;
-    private CancellationTokenSource _cts;
-    private Action<Mat> _frameCallback;
-    private CameraDetail _cameraDetail;
+    private VideoCapture? _capture;
+    private CancellationTokenSource? _cts;
+    private Action<Mat>? _frameCallback;
+    private CameraDetail? _cameraDetail;
 
     public void Start()
     {
+        if (_cameraDetail.IsNull() || !_cameraDetail!.IsSelected) throw new Exception("No camera is selected");
+
         _capture = new VideoCapture(_cameraDetail.Index, VideoCaptureAPIs.DSHOW)
                    {
                        FrameWidth = _cameraDetail.Width,

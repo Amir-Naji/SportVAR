@@ -1,112 +1,74 @@
 ﻿using System.Timers;
-using System.Windows.Controls;
 using OpenCvSharp;
-using OpenCvSharp.WpfExtensions;
-using SportVAR.Models;
 using Timer = System.Timers.Timer;
 
 namespace SportVAR.Services;
 
 public class PreviewService : IPreviewService
 {
-    private readonly IDispatcher _dispatcher;
-
     private readonly Timer _playbackTimer;
-    private AppState _appState;
     private List<Mat> _frameBuffer = [];
-    private Slider _frameSlider;
-    private Image _liveImage;
     private int _tickCount;
+    private const int TicksPerFrame = 2;
 
-    private const int TicksPerFrame = 2; // Play every 2 timer ticks
+    private Func<bool>? _isUserDraggingSlider;
+    private Action<Mat>? _displayFrame;
+    private Action<int>? _updateSlider;
+    private Func<int>? _getCurrentSliderIndex;
 
-    public PreviewService(IDispatcher dispatcher)
+    private bool _isPlaying;
+
+    public PreviewService()
     {
         _playbackTimer = new Timer(33); // ~30fps
         _playbackTimer.Elapsed += PlaybackTimer_Elapsed;
         _playbackTimer.AutoReset = true;
-        _dispatcher = dispatcher;
     }
 
-    public void Initialize(AppState appState, Image image, Slider slider, List<Mat> frameBuffer)
+    public void Initialize(List<Mat> frameBuffer,
+                           Func<bool> isUserDraggingSlider,
+                           Action<Mat> displayFrame,
+                           Action<int> updateSlider,
+                           Func<int> getCurrentSliderIndex)
     {
-        _appState = appState;
-        _liveImage = image;
-        _frameSlider = slider;
         _frameBuffer = frameBuffer;
+        _isUserDraggingSlider = isUserDraggingSlider;
+        _displayFrame = displayFrame;
+        _updateSlider = updateSlider;
+        _getCurrentSliderIndex = getCurrentSliderIndex;
     }
 
     public void Start()
     {
-        _appState.IsReviewing = true;
-        _appState.IsPlaying = true;
+        _isPlaying = true;
+        _tickCount = 0;
         _playbackTimer.Start();
     }
 
     public void Stop()
     {
-        _appState.IsPlaying = false;
-        _appState.IsReviewing = false;
+        _isPlaying = false;
         _playbackTimer.Stop();
     }
 
     private void PlaybackTimer_Elapsed(object? sender, ElapsedEventArgs e)
     {
-        if (!_appState.IsPlaying || _frameBuffer.Count == 0)
+        if (!_isPlaying || _frameBuffer.Count == 0) return;
+
+        if (++_tickCount < TicksPerFrame) return;
+        _tickCount = 0;
+
+        var currentIndex = _getCurrentSliderIndex?.Invoke() ?? 0;
+
+        if (currentIndex >= _frameBuffer.Count)
         {
-            _playbackTimer.Stop();
+            Stop();
             return;
         }
 
-        if (SlowdownSliderForPreview()) return;
-
-        UpdateUIAtPlaybackEnd();
-        UpdateUIWithFrame(_frameBuffer[_appState.CurrentFrameIndex++]);
-    }
-
-    // Safeguard for the last frame to make sure the last frame is displayed.
-    private void UpdateUIAtPlaybackEnd()
-    {
-        if (_appState.CurrentFrameIndex < _frameBuffer.Count) return;
-
-        // Reached end of buffer -> stop playing and switch back to live
-        StopPlayback();
-        _dispatcher.Invoke(() =>
-                           {
-                               if (_frameBuffer.Count <= 0) return;
-
-                               var latest = _frameBuffer.Last();
-                               _liveImage.Source = latest.ToBitmapSource();
-                               if (!_appState.IsUserDraggingSlider)
-                                   _frameSlider.Value = _frameBuffer.Count - 1;
-                           });
-    }
-
-    private void UpdateUIWithFrame(Mat frame)
-    {
-        _dispatcher.Invoke(() =>
-                           {
-                               _liveImage.Source = frame.ToBitmapSource();
-                               if (!_appState.IsUserDraggingSlider)
-                                   _frameSlider.Value = _appState.CurrentFrameIndex;
-                           });
-    }
-
-    private bool SlowdownSliderForPreview()
-    {
-        _tickCount++;
-
-        if (_tickCount < TicksPerFrame)
-            return true;
-
-        _tickCount = 0;
-        return false;
-    }
-
-    private void StopPlayback()
-    {
-        _appState.IsPlaying = false;
-        _appState.IsReviewing = false;
-        _playbackTimer.Stop();
+        var frame = _frameBuffer[currentIndex];
+        _displayFrame?.Invoke(frame);
+        if (!(_isUserDraggingSlider?.Invoke() ?? false))
+            _updateSlider?.Invoke(currentIndex + 1);
     }
 }

@@ -4,20 +4,38 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:wpf="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
-        mc:Ignorable="d" Title="MainWindow" Height="657" Width="800">
+        mc:Ignorable="d" Title="MainWindow" Height="900" Width="1200" WindowStartupLocation="CenterScreen">
     <Grid>
-        <Button x:Name="btRecord" Content="Record" HorizontalAlignment="Right" Margin="0,0,152,21" Height="30" Width="97" Click="btRecord_Click" VerticalAlignment="Bottom"/>
-        <Button x:Name="btStop" Content="Stop"  HorizontalAlignment="Right" Margin="0,0,50,21" Width="97" Height="30" Click="btStop_Click" VerticalAlignment="Bottom"/>
-        <Button x:Name="btToLive" Content="Live" HorizontalAlignment="Right" Margin="0,0,254,21" Width="97" Height="30" Click="btToLive_Click" VerticalAlignment="Bottom"/>
-        <Image x:Name="liveImage" Stretch="Uniform" Margin="10,10,10,76"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="500*"/>
+            <RowDefinition Height="73*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="600*"/>
+            <ColumnDefinition Width="600*"/>
+        </Grid.ColumnDefinitions>
+
+        <Button x:Name="btRecord" Content="Record" HorizontalAlignment="Left" Margin="373,72,0,0" Height="30" Width="97" Command="{Binding ToggleRecordingCommand}" VerticalAlignment="Top" Grid.Column="1" Grid.Row="1"/>
+        <Button x:Name="btStop" Content="Stop"  HorizontalAlignment="Left" Margin="474,72,0,0" Width="97" Height="30" Command="{Binding StopRecordingCommand}" VerticalAlignment="Top" Grid.Column="1" Grid.Row="1"/>
+        <Button x:Name="btToLive" Content="Live" HorizontalAlignment="Left" Margin="270,72,0,0" Width="97" Height="30" Command="{Binding ToLiveCommand}" VerticalAlignment="Top" Grid.Column="1" Grid.Row="1"/>
+
+        <Image x:Name="liveImage1" Stretch="Uniform" Margin="5,10,5,5" Source="{Binding LiveImage1Source}" />
+        <Image x:Name="liveImage2" Stretch="Uniform" Margin="5,10,5,5" Grid.Column="1" Source="{Binding LiveImage2Source}" />
+
         <Slider x:Name="frameSlider"
                 Minimum="0"
-                ValueChanged="frameSlider_ValueChanged"
+                Value="{Binding SliderValue, Mode=TwoWay}"
+                Maximum="{Binding SliderMaximum}"
                 PreviewMouseDown="Slider_PreviewMouseDown"
                 PreviewMouseUp="Slider_PreviewMouseUp"
-                Margin="10,0,10,61" Height="20" VerticalAlignment="Bottom"/>
+                Margin="10,0,10,49" Height="20" VerticalAlignment="Bottom" Grid.ColumnSpan="2" Grid.Row="1"/>
 
-        <ComboBox x:Name="cmbCameraNames" HorizontalAlignment="Left" Margin="28,0,0,29" VerticalAlignment="Bottom" Width="200" Loaded="cmbCameraNames_Loaded" SelectionChanged="cmbCameraNames_SelectionChanged" />
-        <ComboBox x:Name="cmbCameraResolutions" HorizontalAlignment="Left" Margin="234,0,0,29" VerticalAlignment="Bottom" Width="200" SelectionChanged="cmbCameraResolutions_SelectionChanged" />
+        <Label Content="Camera 1:" HorizontalAlignment="Left" Margin="9,5,0,0" Grid.Row="1" VerticalAlignment="Top"/>
+        <ComboBox x:Name="cmbCamera1Names" HorizontalAlignment="Left" Margin="70,8,0,0" VerticalAlignment="Top" Width="200" Loaded="cmbCameraNames_Loaded" SelectionChanged="cmbCamera1Names_SelectionChanged" Height="22" Grid.Row="1" DisplayMemberPath="Name"/>
+        <ComboBox x:Name="cmbCamera1Resolutions" HorizontalAlignment="Left" Margin="275,8,0,0" VerticalAlignment="Top" Width="215" SelectionChanged="cmbCamera1Resolutions_SelectionChanged" Height="22" Grid.Row="1" DisplayMemberPath="FormattedString" ItemsSource="{Binding Camera1Resolutions}"/>
+
+        <Label Content="Camera 2:" HorizontalAlignment="Left" Margin="7,1,0,0" Grid.Row="1" VerticalAlignment="Top" Grid.Column="1"/>
+        <ComboBox x:Name="cmbCamera2Names" HorizontalAlignment="Left" Margin="75,4,0,0" VerticalAlignment="Top" Width="200" Loaded="cmbCameraNames_Loaded" SelectionChanged="cmbCamera2Names_SelectionChanged" Height="22" Grid.Row="1" Grid.Column="1" DisplayMemberPath="Name"/>
+        <ComboBox x:Name="cmbCamera2Resolutions" HorizontalAlignment="Left" Margin="280,3,0,0" VerticalAlignment="Top" Width="200" SelectionChanged="cmbCamera2Resolutions_SelectionChanged" Height="22" Grid.Row="1" Grid.Column="1" DisplayMemberPath="FormattedString" ItemsSource="{Binding Camera2Resolutions}"/>
     </Grid>
 </Window>

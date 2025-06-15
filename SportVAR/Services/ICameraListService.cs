@@ -6,5 +6,5 @@ public interface ICameraListService
 {
     List<CameraModel> CameraNames();
 
-    List<CameraDetail> CameraResolution(string cameraName);
+    List<CameraDetail> CameraResolution(string monikerString);
 }

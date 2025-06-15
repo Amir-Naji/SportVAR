@@ -5,4 +5,7 @@ public class CameraModel
     public int Index { get; set; }
 
     public string Name { get; set; }
+
+    public string MonikerString { get; set; }
+
 }

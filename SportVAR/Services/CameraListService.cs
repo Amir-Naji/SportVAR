@@ -1,5 +1,4 @@
 ﻿using AForge.Video.DirectShow;
-using OpenCvSharp;
 using SportVAR.Models;
 
 namespace SportVAR.Services;
@@ -14,13 +13,13 @@ public class CameraListService : ICameraListService
         return videoDevices
                      .Cast<FilterInfo>()
                      .OrderByDescending(x => x)
-                     .Select(d => new CameraModel { Index = index++, Name = d.Name})
+                     .Select(d => new CameraModel { Index = index++, Name = d.Name, MonikerString = d.MonikerString})
                      .ToList();
     }
 
-    public List<CameraDetail> CameraResolution(string cameraName)
+    public List<CameraDetail> CameraResolution(string monikerString)
     {
-        var videoDevice = GetCameras().Cast<FilterInfo>().FirstOrDefault(x => x.Name == cameraName);
+        var videoDevice = GetCameras().Cast<FilterInfo>().FirstOrDefault(x => x.MonikerString == monikerString);
         var videoSource = new VideoCaptureDevice(videoDevice!.MonikerString);
 
         return videoSource.VideoCapabilities.Select(x => new CameraDetail()

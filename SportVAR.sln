@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35931.197 d17.13
+VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SportVAR", "SportVAR\SportVAR.csproj", "{C0E7F258-4BF6-4C2E-9D42-0851A710D553}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SportVARTest", "SportVARTest\SportVARTest.csproj", "{5378939C-FC29-4A2E-B6BC-B3937EDDDE4D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{C0E7F258-4BF6-4C2E-9D42-0851A710D553}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0E7F258-4BF6-4C2E-9D42-0851A710D553}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C0E7F258-4BF6-4C2E-9D42-0851A710D553}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5378939C-FC29-4A2E-B6BC-B3937EDDDE4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5378939C-FC29-4A2E-B6BC-B3937EDDDE4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5378939C-FC29-4A2E-B6BC-B3937EDDDE4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5378939C-FC29-4A2E-B6BC-B3937EDDDE4D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
