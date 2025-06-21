@@ -17,7 +17,7 @@ public class CameraFeed
         _device.NewFrame += OnNewFrame;
     }
 
-    public event Action<BitmapImage> FrameReady;
+    public event Action<BitmapImage>? FrameReady;
 
     private void OnNewFrame(object sender, NewFrameEventArgs e)
     {

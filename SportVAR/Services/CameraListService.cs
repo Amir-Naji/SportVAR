@@ -17,18 +17,27 @@ public class CameraListService : ICameraListService
                      .ToList();
     }
 
-    public List<CameraDetail> CameraResolution(string monikerString)
+    public async Task<List<CameraDetail>> CameraResolution(string monikerString)
     {
-        var videoDevice = GetCameras().Cast<FilterInfo>().FirstOrDefault(x => x.MonikerString == monikerString);
-        var videoSource = new VideoCaptureDevice(videoDevice!.MonikerString);
+        return await Task.Run(() =>
+                              {
+                                  var videoDevice = GetCameras().Cast<FilterInfo>().FirstOrDefault(x => x.MonikerString == monikerString);
+                                  if (videoDevice == null) return new List<CameraDetail>();
 
-        return videoSource.VideoCapabilities.Select(x => new CameraDetail()
-                                                         {
-                                                             Width = x.FrameSize.Width,
-                                                             Height = x.FrameSize.Height,
-                                                             Fps = x.AverageFrameRate
-                                                         })
-                          .ToList();
+                                  var videoSource = new VideoCaptureDevice(videoDevice.MonikerString);
+
+                                  // Defensive: Check null or empty
+                                  var caps = videoSource.VideoCapabilities;
+                                  if (caps == null || caps.Length == 0)
+                                      return new List<CameraDetail>();
+
+                                  return videoSource.VideoCapabilities.Select(x => new CameraDetail
+                                                                                   {
+                                                                                       Width = x.FrameSize.Width,
+                                                                                       Height = x.FrameSize.Height,
+                                                                                       Fps = x.AverageFrameRate
+                                                                                   }).ToList();
+                              });
     }
 
     private static FilterInfoCollection GetCameras()

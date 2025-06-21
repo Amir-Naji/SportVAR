@@ -5,9 +5,6 @@ using System.Windows;
 
 namespace SportVAR;
 
-/// <summary>
-///     Interaction logic for App.xaml
-/// </summary>
 public partial class App : Application
 {
     public static IServiceProvider Services { get; private set; }
@@ -37,6 +34,7 @@ public partial class App : Application
                                                       new VideoRecorder( 1280, 720));
         
         services.AddTransient<IPreviewService, PreviewService>();
+        services.AddTransient<ICameraConfigurator, CameraConfigurator>();
         services.AddTransient<ICameraListService, CameraListService>();
         services.AddSingleton<Func<IVideoRecorder>>(provider => provider.GetRequiredService<IVideoRecorder>);
     }

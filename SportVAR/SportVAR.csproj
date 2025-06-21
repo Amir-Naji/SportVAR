@@ -8,7 +8,17 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702;CS8612</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <NoWarn>1701;1702;CS8612</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
+    <PackageReference Include="Accord.Video.FFMPEG" Version="3.8.0" />
+    <PackageReference Include="Accord.Video.FFMPEG.x64" Version="3.8.0" />
     <PackageReference Include="AForge.Video.DirectShow" Version="2.2.5" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="LibVLCSharp" Version="3.9.3" />
@@ -24,6 +34,102 @@
 
   <ItemGroup>
     <Folder Include="Utilities\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg\3.8.0\build\avcodec-57.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\avcodec-57.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\avcodec-57.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg\3.8.0\build\avdevice-57.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\avdevice-57.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\avdevice-57.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg\3.8.0\build\avfilter-6.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\avfilter-6.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\avfilter-6.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg\3.8.0\build\avformat-57.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\avformat-57.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\avformat-57.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg\3.8.0\build\avutil-55.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\avutil-55.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\avutil-55.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg\3.8.0\build\postproc-54.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\postproc-54.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\postproc-54.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg\3.8.0\build\swresample-2.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\swresample-2.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\swresample-2.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg\3.8.0\build\swscale-4.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\swscale-4.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="C:\Users\Amir\.nuget\packages\accord.video.ffmpeg.x64\3.8.0\build\swscale-4.dll" />
   </ItemGroup>
 
 </Project>

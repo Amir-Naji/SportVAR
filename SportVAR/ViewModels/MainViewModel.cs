@@ -135,11 +135,11 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-    public void Camera1Selected(CameraModel model)
+    public async Task Camera1Selected(CameraModel model)
     {
         _camera1Model = model;
         Camera1Resolutions.Clear();
-        foreach (var res in _cameraListService.CameraResolution(model.Name))
+        foreach (var res in await _cameraListService.CameraResolution(model.Name))
             Camera1Resolutions.Add(res);
     }
 
@@ -151,11 +151,11 @@ public partial class MainViewModel : ObservableObject
         _camera.SetCameraDetails(_camera1Detail);
     }
 
-    public void Camera2Selected(CameraModel model)
+    public async Task Camera2Selected(CameraModel model)
     {
         _camera2Model = model;
         Camera2Resolutions.Clear();
-        foreach (var res in _cameraListService.CameraResolution(model.Name))
+        foreach (var res in await _cameraListService.CameraResolution(model.Name))
             Camera2Resolutions.Add(res);
     }
 

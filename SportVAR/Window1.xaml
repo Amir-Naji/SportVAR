@@ -81,8 +81,8 @@
 
         <!-- Control buttons -->
         <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Center" Margin="10">
-            <Button Content="Start" Command="{Binding StartCommand}" Margin="5" />
-            <Button Content="Stop" Command="{Binding StopCommand}" Margin="5" />
+            <Button Content="Start" Command="{Binding ToggleRecordingCommand}" Margin="5" />
+            <Button Content="Stop" Command="{Binding ToggleRecordingCommand}" Margin="5" />
         </StackPanel>
     </Grid>
 </Window>
