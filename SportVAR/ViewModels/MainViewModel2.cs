@@ -7,21 +7,19 @@ using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
 using SportVAR.Models;
 using SportVAR.Services;
-using SportVAR.Utilities;
 using Size = OpenCvSharp.Size;
 
 namespace SportVAR.ViewModels;
 
-public class MainViewModel2 : INotifyPropertyChanged
+public class MainViewModel2 : INotifyPropertyChanged, IDisposable
 {
+    private readonly ICameraConfigurator _cameraConfigurator;
     private readonly ICameraListService _cameraListService;
     private readonly ICameraService _cameraService;
-    private readonly ICameraConfigurator _cameraConfigurator;
 
-    private CameraFeed _camera1, _camera2;
+    //private CameraFeed _camera1, _camera2;
 
     private CameraDetail _camera1Detail = new();
-    //public BitmapImage Camera1Image { get; private set; }
 
     private BitmapSource _camera1Image;
     private CameraModel _camera1Model = new();
@@ -32,18 +30,17 @@ public class MainViewModel2 : INotifyPropertyChanged
     private VideoCapture _capture1;
     private VideoCapture _capture2;
     private bool _isRecording;
-    private FilterInfo _selectedCamera1;
-    private FilterInfo _selectedCamera2;
+    //private FilterInfo _selectedCamera1;
+    //private FilterInfo _selectedCamera2;
     private CancellationTokenSource _tokenSource;
     private VideoWriter _writer1;
     private VideoWriter _writer2;
 
-    public MainViewModel2(ICameraService cameraService, ICameraListService cameraListService, ICameraConfigurator cameraConfigurator)
+    public MainViewModel2(ICameraService cameraService, ICameraListService cameraListService,
+                          ICameraConfigurator cameraConfigurator)
     {
         ToggleRecordingCommand = new RelayCommand(ToggleRecording);
 
-        //StartCommand = new RelayCommand(StartCameras);
-        //StopCommand = new RelayCommand(StopCameras);
         _cameraService = cameraService;
         _cameraListService = cameraListService;
         _cameraConfigurator = cameraConfigurator;
@@ -52,17 +49,7 @@ public class MainViewModel2 : INotifyPropertyChanged
     }
 
     public RelayCommand ToggleRecordingCommand { get; }
-    public ObservableCollection<FilterInfo> AvailableCameras { get; } = new();
-
-    //public BitmapImage Camera1Image
-    //{
-    //    get => _camera1Image;
-    //    set
-    //    {
-    //        _camera1Image = value;
-    //        OnPropertyChanged(nameof(Camera1Image));
-    //    }
-    //}
+    //public ObservableCollection<FilterInfo> AvailableCameras { get; } = new();
 
     public BitmapSource Camera1Image
     {
@@ -89,65 +76,33 @@ public class MainViewModel2 : INotifyPropertyChanged
     public ObservableCollection<CameraDetail> Camera1Resolutions { get; } = [];
     public ObservableCollection<CameraDetail> Camera2Resolutions { get; } = [];
 
-    public FilterInfo SelectedCamera1
+    //public FilterInfo SelectedCamera1
+    //{
+    //    get => _selectedCamera1;
+    //    set
+    //    {
+    //        _selectedCamera1 = value;
+    //        OnPropertyChanged(nameof(SelectedCamera1));
+    //    }
+    //}
+
+    //public FilterInfo SelectedCamera2
+    //{
+    //    get => _selectedCamera2;
+    //    set
+    //    {
+    //        _selectedCamera2 = value;
+    //        OnPropertyChanged(nameof(SelectedCamera2));
+    //    }
+    //}
+
+    public void Dispose()
     {
-        get => _selectedCamera1;
-        set
-        {
-            _selectedCamera1 = value;
-            OnPropertyChanged(nameof(SelectedCamera1));
-        }
+        TryCleanup();
     }
-
-    public FilterInfo SelectedCamera2
-    {
-        get => _selectedCamera2;
-        set
-        {
-            _selectedCamera2 = value;
-            OnPropertyChanged(nameof(SelectedCamera2));
-        }
-    }
-
-    //public ICommand StartCommand { get; }
-
-    //public ICommand StopCommand { get; }
 
     public event PropertyChangedEventHandler PropertyChanged;
 
-    private bool CanStart()
-    {
-        return SelectedCamera1.IsNotNull() && SelectedCamera2.IsNotNull();
-    }
-
-    private void StartCameras()
-    {
-        _camera1 = new CameraFeed(_camera1Detail.MonikerString);
-        _camera2 = new CameraFeed(_camera2Detail.MonikerString);
-
-        _camera1.FrameReady += img => Camera1Image = RaiseImageChange(img, nameof(Camera1Image));
-        _camera2.FrameReady += img => Camera2Image = RaiseImageChange(img, nameof(Camera2Image));
-
-        _camera1.Start();
-        _camera2.Start();
-    }
-
-    private void StopCameras()
-    {
-        _camera1?.Stop();
-        _camera2?.Stop();
-    }
-
-    private BitmapImage RaiseImageChange(BitmapImage image, string prop)
-    {
-        OnPropertyChanged(prop);
-        return image;
-    }
-
-    //private void OnPropertyChanged(string name)
-    //{
-    //    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-    //}
 
     private void LoadCameras()
     {
@@ -161,10 +116,6 @@ public class MainViewModel2 : INotifyPropertyChanged
 
     public async Task Camera1Selected(CameraModel model)
     {
-        //_camera1Model = model;
-        //Camera1Resolutions = _cameraConfigurator.GetCameraResolutions(model);
-        //OnPropertyChanged(nameof(Camera1Resolutions));
-
         _camera1Model = model;
         Camera1Resolutions.Clear();
         foreach (var res in await _cameraListService.CameraResolution(model.MonikerString))
@@ -173,11 +124,6 @@ public class MainViewModel2 : INotifyPropertyChanged
 
     public void Camera1ResolutionSelected(CameraDetail detail)
     {
-        //_camera1Detail = detail;
-        //_camera1Detail.Name = _camera1Model.Name;
-        //_camera1Detail.Index = _camera1Model.Index;
-        //_camera1Detail.MonikerString = _camera1Model.MonikerString;
-        //_cameraService.SetCameraDetails(_camera1Detail);
         _camera1Detail = _cameraConfigurator.SetSelectedResolution(_camera1Model, detail);
     }
 
@@ -191,11 +137,7 @@ public class MainViewModel2 : INotifyPropertyChanged
 
     public void Camera2ResolutionSelected(CameraDetail detail)
     {
-        _camera2Detail = detail;
-        _camera2Detail.Name = _camera2Model.Name;
-        _camera2Detail.Index = _camera2Model.Index;
-        _camera2Detail.MonikerString = _camera2Model.MonikerString;
-        _cameraService.SetCameraDetails(_camera2Detail);
+        _camera2Detail = _cameraConfigurator.SetSelectedResolution(_camera2Model, detail);
     }
 
     private void ToggleRecording()
@@ -225,10 +167,14 @@ public class MainViewModel2 : INotifyPropertyChanged
                             Fps = _camera2Detail.Fps
                         };
 
-            int width = 640, height = 480, fps = 25;
-
-            _writer1 = new VideoWriter("camera1.avi", FourCC.XVID, fps, new Size(width, height));
-            _writer2 = new VideoWriter("camera2.avi", FourCC.XVID, fps, new Size(width, height));
+            _writer1 = new VideoWriter("camera1.avi",
+                                       FourCC.XVID,
+                                       _camera1Detail.Fps,
+                                       new Size(_camera1Detail.Width, _camera1Detail.Height));
+            _writer2 = new VideoWriter("camera2.avi",
+                                       FourCC.XVID,
+                                       _camera2Detail.Fps,
+                                       new Size(_camera2Detail.Width, _camera2Detail.Height));
 
             Task.Run(() => CaptureLoop(_capture1, frame => Camera1Image = frame, _writer1, _tokenSource.Token));
             Task.Run(() => CaptureLoop(_capture2, frame => Camera2Image = frame, _writer2, _tokenSource.Token));
@@ -257,5 +203,38 @@ public class MainViewModel2 : INotifyPropertyChanged
     private void OnPropertyChanged(string name)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
+
+    public void TryCleanup()
+    {
+        try
+        {
+            CleanUp();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error during cleanup: {ex.Message}");
+        }
+    }
+
+    private void CleanUp()
+    {
+        //_camera1?.Stop();
+        //_camera2?.Stop();
+
+        _capture1?.Release();
+        _capture1?.Dispose();
+
+        _capture2?.Release();
+        _capture2?.Dispose();
+
+        _writer1?.Release();
+        _writer1?.Dispose();
+
+        _writer2?.Release();
+        _writer2?.Dispose();
+
+        _tokenSource?.Cancel();
+        _tokenSource?.Dispose();
     }
 }

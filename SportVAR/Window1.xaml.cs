@@ -44,4 +44,13 @@ public partial class Window1
         if (cmbCamera2Resolutions.SelectedItem is CameraDetail detail)
             Vm.Camera2ResolutionSelected(detail);
     }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        base.OnClosed(e);
+
+        if (DataContext is MainViewModel2 vm)
+            vm.TryCleanup();
+    }
+
 }

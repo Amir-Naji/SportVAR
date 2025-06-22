@@ -1,5 +1,8 @@
 ﻿using AForge.Video.DirectShow;
+using DirectShowLib;
 using SportVAR.Models;
+using FilterCategory = AForge.Video.DirectShow.FilterCategory;
+using FilterInfo = AForge.Video.DirectShow.FilterInfo;
 
 namespace SportVAR.Services;
 
@@ -7,29 +10,32 @@ public class CameraListService : ICameraListService
 {
     public List<CameraModel> CameraNames()
     {
-        var videoDevices = GetCameras();
+        DsDevice[] systemCameras = DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice);
         var index = 0;
-        
-        return videoDevices
-                     .Cast<FilterInfo>()
-                     .OrderByDescending(x => x)
-                     .Select(d => new CameraModel { Index = index++, Name = d.Name, MonikerString = d.MonikerString})
-                     .ToList();
+
+        return systemCameras.Select(camera =>
+                                            new CameraModel
+                                            {
+                                                Name = camera.Name,
+                                                MonikerString = camera.DevicePath,
+                                                Index = index++
+                                            }).ToList();
     }
 
     public async Task<List<CameraDetail>> CameraResolution(string monikerString)
     {
         return await Task.Run(() =>
                               {
-                                  var videoDevice = GetCameras().Cast<FilterInfo>().FirstOrDefault(x => x.MonikerString == monikerString);
-                                  if (videoDevice == null) return new List<CameraDetail>();
+                                  var videoDevice = GetCameras().Cast<FilterInfo>()
+                                                                .FirstOrDefault(x => x.MonikerString == monikerString);
+                                  if (videoDevice == null) return [];
 
                                   var videoSource = new VideoCaptureDevice(videoDevice.MonikerString);
 
                                   // Defensive: Check null or empty
                                   var caps = videoSource.VideoCapabilities;
                                   if (caps == null || caps.Length == 0)
-                                      return new List<CameraDetail>();
+                                      return [];
 
                                   return videoSource.VideoCapabilities.Select(x => new CameraDetail
                                                                                    {
