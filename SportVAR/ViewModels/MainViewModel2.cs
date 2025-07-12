@@ -1,100 +1,60 @@
-﻿using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Windows;
-using System.Windows.Media.Imaging;
-using AForge.Video.DirectShow;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
 using SportVAR.Models;
 using SportVAR.Services;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Windows;
+using System.Windows.Media.Imaging;
 using Size = OpenCvSharp.Size;
 
 namespace SportVAR.ViewModels;
 
-public class MainViewModel2 : INotifyPropertyChanged, IDisposable
+public partial class MainViewModel2 : ObservableObject, IDisposable
 {
     private readonly ICameraConfigurator _cameraConfigurator;
     private readonly ICameraListService _cameraListService;
     private readonly ICameraService _cameraService;
-
-    //private CameraFeed _camera1, _camera2;
+    private readonly List<Mat> _frameBuffer = [];
+    private readonly IPreviewService _previewService;
+    private readonly IVideoRecorder _videoRecorder;
 
     private CameraDetail _camera1Detail = new();
 
-    private BitmapSource _camera1Image;
+    [ObservableProperty] private BitmapSource? _camera1Image;
     private CameraModel _camera1Model = new();
     private CameraDetail _camera2Detail = new();
-    private BitmapSource _camera2Image;
+    [ObservableProperty] private BitmapSource? _camera2Image;
     private CameraModel _camera2Model = new();
-
     private VideoCapture _capture1;
     private VideoCapture _capture2;
     private bool _isRecording;
-    //private FilterInfo _selectedCamera1;
-    //private FilterInfo _selectedCamera2;
+    [ObservableProperty] private int _maxSliderValue;
     private CancellationTokenSource _tokenSource;
     private VideoWriter _writer1;
     private VideoWriter _writer2;
 
     public MainViewModel2(ICameraService cameraService, ICameraListService cameraListService,
-                          ICameraConfigurator cameraConfigurator)
+                          ICameraConfigurator cameraConfigurator, IPreviewService previewService,
+                          IVideoRecorder videoRecorder)
     {
         ToggleRecordingCommand = new RelayCommand(ToggleRecording);
 
         _cameraService = cameraService;
         _cameraListService = cameraListService;
         _cameraConfigurator = cameraConfigurator;
+        _previewService = previewService;
+        _videoRecorder = videoRecorder;
 
         LoadCameras();
     }
 
     public RelayCommand ToggleRecordingCommand { get; }
-    //public ObservableCollection<FilterInfo> AvailableCameras { get; } = new();
-
-    public BitmapSource Camera1Image
-    {
-        get => _camera1Image;
-        set
-        {
-            _camera1Image = value;
-            OnPropertyChanged(nameof(Camera1Image));
-        }
-    }
-
-    public BitmapSource Camera2Image
-    {
-        get => _camera2Image;
-        set
-        {
-            _camera2Image = value;
-            OnPropertyChanged(nameof(Camera2Image));
-        }
-    }
-
     public ObservableCollection<CameraModel> Camera1Options { get; } = [];
     public ObservableCollection<CameraModel> Camera2Options { get; } = [];
     public ObservableCollection<CameraDetail> Camera1Resolutions { get; } = [];
     public ObservableCollection<CameraDetail> Camera2Resolutions { get; } = [];
-
-    //public FilterInfo SelectedCamera1
-    //{
-    //    get => _selectedCamera1;
-    //    set
-    //    {
-    //        _selectedCamera1 = value;
-    //        OnPropertyChanged(nameof(SelectedCamera1));
-    //    }
-    //}
-
-    //public FilterInfo SelectedCamera2
-    //{
-    //    get => _selectedCamera2;
-    //    set
-    //    {
-    //        _selectedCamera2 = value;
-    //        OnPropertyChanged(nameof(SelectedCamera2));
-    //    }
-    //}
 
     public void Dispose()
     {
@@ -160,6 +120,7 @@ public class MainViewModel2 : INotifyPropertyChanged, IDisposable
                             FrameHeight = _camera1Detail.Height,
                             Fps = _camera1Detail.Fps
                         };
+
             _capture2 = new VideoCapture(_camera2Detail.Index, VideoCaptureAPIs.DSHOW)
                         {
                             FrameWidth = _camera2Detail.Width,
@@ -167,27 +128,39 @@ public class MainViewModel2 : INotifyPropertyChanged, IDisposable
                             Fps = _camera2Detail.Fps
                         };
 
-            _writer1 = new VideoWriter("camera1.avi",
-                                       FourCC.XVID,
-                                       _camera1Detail.Fps,
-                                       new Size(_camera1Detail.Width, _camera1Detail.Height));
-            _writer2 = new VideoWriter("camera2.avi",
-                                       FourCC.XVID,
-                                       _camera2Detail.Fps,
-                                       new Size(_camera2Detail.Width, _camera2Detail.Height));
+            Record(_camera1Detail);
+            Record(_camera2Detail);
+
+            var frameSize = new Size(_camera1Detail.Width, _camera1Detail.Height);
+            var outputPath = $"{DateTime.Now.ToFileTimeUtc()}.avi";
+            _writer1 = new VideoWriter(outputPath, FourCC.XVID, _camera1Detail.Fps, frameSize);
+
+            outputPath = $"{DateTime.Now.ToFileTimeUtc()}.avi";
+            frameSize = new Size(_camera2Detail.Width, _camera2Detail.Height);
+            _writer2 = new VideoWriter(outputPath, FourCC.XVID, _camera2Detail.Fps, frameSize);
 
             Task.Run(() => CaptureLoop(_capture1, frame => Camera1Image = frame, _writer1, _tokenSource.Token));
             Task.Run(() => CaptureLoop(_capture2, frame => Camera2Image = frame, _writer2, _tokenSource.Token));
         }
     }
 
-    private static void CaptureLoop(VideoCapture capture, Action<BitmapSource> updateImage, VideoWriter writer,
+    private void LiveShow()
+    {
+    }
+
+    private void Record(CameraDetail cameraDetail)
+    {
+        _videoRecorder.Start(cameraDetail);
+    }
+
+    private static void CaptureLoop(VideoCapture capture,
+                                    Action<BitmapSource> updateImage,
+                                    VideoWriter writer,
                                     CancellationToken token)
     {
-        using var mat = new Mat();
-
         while (!token.IsCancellationRequested)
         {
+            using var mat = new Mat();
             if (!capture.Read(mat) || mat.Empty()) continue;
 
             writer.Write(mat);
@@ -200,10 +173,10 @@ public class MainViewModel2 : INotifyPropertyChanged, IDisposable
         capture.Release();
     }
 
-    private void OnPropertyChanged(string name)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-    }
+    //private void OnPropertyChanged(string name)
+    //{
+    //    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    //}
 
     public void TryCleanup()
     {

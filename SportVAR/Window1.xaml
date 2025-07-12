@@ -80,9 +80,23 @@
         </StackPanel>
 
         <!-- Control buttons -->
-        <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Center" Margin="10">
-            <Button Content="Start" Command="{Binding ToggleRecordingCommand}" Margin="5" />
-            <Button Content="Stop" Command="{Binding ToggleRecordingCommand}" Margin="5" />
+        <!-- Slider and Control buttons -->
+        <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0,0,0,0">
+            <!-- Timeline Slider -->
+            <Slider x:Name="timelineSlider"
+                    Minimum="0"
+                    Maximum="{Binding MaxSliderValue}"
+                    Value="{Binding SliderValue, Mode=TwoWay}"
+                    TickFrequency="1"
+                    IsSnapToTickEnabled="True"
+                    Width="800"
+                    Margin="10" />
+
+            <!-- Control buttons -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,2">
+                <Button Content="Start" Command="{Binding ToggleRecordingCommand}" Margin="5" />
+                <Button Content="Stop" Command="{Binding ToggleRecordingCommand}" Margin="5" />
+            </StackPanel>
         </StackPanel>
     </Grid>
 </Window>

@@ -25,6 +25,7 @@ public partial class App : Application
     {
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<MainViewModel2>();
+        services.AddSingleton<ViewModel3>();
         services.AddSingleton<MainWindow>();
         services.AddSingleton<Window1>();
 
